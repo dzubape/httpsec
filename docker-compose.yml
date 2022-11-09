@@ -7,7 +7,7 @@ services:
       dockerfile: https.Dockerfile
       target: apache-http
     volumes:
-      - ./html:/var/www/html
+      - htdocs:/var/www/html
     ports:
       - 80:80
     profiles:
@@ -23,7 +23,7 @@ services:
     working_dir: /root
     volumes:
       - ./cert-issue.sh:/root/cert-issue.sh
-      - ./html:/root/htdocs
+      - htdocs:/root/htdocs
       - ./cert:/root/cert
       - ./.acme.sh:/root/.acme.sh
     depends_on: ["domain-http"]
@@ -31,7 +31,7 @@ services:
     profiles:
       - cert-issue
 
-  web:
+  cert-check:
     build:
       context: .
       dockerfile: https.Dockerfile
@@ -42,11 +42,9 @@ services:
     volumes:
       - ./cert:/web/${DOMAIN_NAME}/cert
       - ./html:/web/${DOMAIN_NAME}/html
-    # depends_on:
-    #   cert-issue:
-    #     condition: service_completed_successfully
+      - ./${DOMAIN_NAME}-ssl.conf:/etc/apache2/sites-enabled/${DOMAIN_NAME}-ssl.conf
     profiles:
-      - cert-inject
+      - cert-check
 
 volumes:
   htdocs:

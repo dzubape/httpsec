@@ -33,10 +33,10 @@ RUN SSL_CONFIG_FILE=/etc/apache2/sites-available/${DOMAIN_NAME}-ssl.conf \
   && SET_VAL() { sed -r -i "s|(#*)?$1\s+\S+|$1 $2|g" ${SSL_CONFIG_FILE} ; } \
   && SET_VAL SSLCertificateFile ${INSTALL_CERT_DIR}/server.crt \
   && SET_VAL SSLCertificateKeyFile ${INSTALL_CERT_DIR}/server.key \
-  && SET_VAL SSLCertificateChainFile ${INSTALL_CERT_DIR}/server-ca.cert \
+  && SET_VAL SSLCertificateChainFile ${INSTALL_CERT_DIR}/server-ca.crt \
   && SET_VAL DocumentRoot ${DOCUMENT_ROOT} \
   && sed -r -i "s|VirtualHost\s+_default_\:443|VirtualHost *:443|g" ${SSL_CONFIG_FILE} \
   && cat ${SSL_CONFIG_FILE}
 
 RUN a2enmod ssl
-RUN a2ensite ${DOMAIN_NAME}-ssl
+RUN touch /etc/apache2/sites-available/${DOMAIN_NAME}-ssl.conf && a2ensite ${DOMAIN_NAME}-ssl
