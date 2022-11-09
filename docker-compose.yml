@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  domain-http:
+    build:
+      context: .
+      dockerfile: https.Dockerfile
+      target: apache-http
+    volumes:
+      - ./html:/var/www/html
+    ports:
+      - 80:80
+    profiles:
+      - cert-issue
+  
+  cert-issue:
+    build:
+      context: .
+      dockerfile: https.Dockerfile
+      target: cert-issue
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+    working_dir: /root
+    volumes:
+      - ./cert-issue.sh:/root/cert-issue.sh
+      - ./html:/root/htdocs
+      - ./cert:/root/cert
+      - ./.acme.sh:/root/.acme.sh
+    depends_on: ["domain-http"]
+    entrypoint: ./cert-issue.sh ${DOMAIN_NAME}
+    profiles:
+      - cert-issue
+
+  web:
+    build:
+      context: .
+      dockerfile: https.Dockerfile
+      target: apache-https
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./cert:/web/${DOMAIN_NAME}/cert
+      - ./html:/web/${DOMAIN_NAME}/html
+    # depends_on:
+    #   cert-issue:
+    #     condition: service_completed_successfully
+    profiles:
+      - cert-inject
+
+volumes:
+  htdocs:
