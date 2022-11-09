@@ -42,7 +42,7 @@ services:
     volumes:
       - ./cert:/web/${DOMAIN_NAME}/cert
       - ./html:/web/${DOMAIN_NAME}/html
-      - ./${DOMAIN_NAME}-ssl.conf:/etc/apache2/sites-enabled/${DOMAIN_NAME}-ssl.conf
+      # - ./${DOMAIN_NAME}-ssl.conf:/etc/apache2/sites-enabled/${DOMAIN_NAME}-ssl.conf
     profiles:
       - cert-check
 
