@@ -9,7 +9,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt update && apt install -y apache2 apache2-utils && apt clean 
 EXPOSE 80
 EXPOSE 443
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+CMD ["timeout", "80", "apache2ctl", "-D", "FOREGROUND"]
 
 
 ## certificate issue ##
@@ -34,3 +34,5 @@ COPY default-ssl.conf ${SSL_CONFIG_FILE}
 RUN sed -i "s|\${DOMAIN_NAME}|${DOMAIN_NAME}|g" ${SSL_CONFIG_FILE} && cat ${SSL_CONFIG_FILE}
 RUN a2enmod ssl
 RUN touch ${SSL_CONFIG_FILE} && a2ensite ${DOMAIN_NAME}-ssl
+
+CMD ["apache2ctl", "-D", "FOREGROUND"]

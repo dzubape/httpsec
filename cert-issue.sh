@@ -6,7 +6,7 @@ INSTALL_CERT_DIR=/root/cert
 WEB_PROXY_DIR=/root/htdocs
 DOMAIN_NAME=$1
 
-./acme.sh --issue -d ${DOMAIN_NAME} -w ${WEB_PROXY_DIR}
+./acme.sh --issue -d ${DOMAIN_NAME} -w ${WEB_PROXY_DIR} --force
 
 if (( $? != 0 ))
 then

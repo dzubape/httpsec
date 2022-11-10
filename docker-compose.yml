@@ -31,7 +31,7 @@ services:
     profiles:
       - cert-issue
 
-  cert-check:
+  cert-check-server:
     build:
       context: .
       dockerfile: https.Dockerfile
@@ -43,6 +43,23 @@ services:
       - ./cert:/web/${DOMAIN_NAME}/cert
       - ./html:/web/${DOMAIN_NAME}/html
       # - ./${DOMAIN_NAME}-ssl.conf:/etc/apache2/sites-enabled/${DOMAIN_NAME}-ssl.conf
+    profiles:
+      - cert-check
+    # depends_on:
+    #   domain-http:
+    #     condition: service_completed_successfully
+
+  cert-check-client:
+    build:
+      context: .
+      dockerfile: https.Dockerfile
+      target: cert-issue
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+    entrypoint: curl "https://${DOMAIN_NAME}"
+    depends_on:
+      cert-check-server:
+        condition: service_started
     profiles:
       - cert-check
 
