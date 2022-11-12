@@ -27,13 +27,15 @@ RUN echo \${CONF}
 
 RUN UNCOMMENT_DIR() { KEY=\$1 ; sed -r "s|(#+\s*)+(\b\${KEY}\b.*)|\2|g" ; } \
     && cat \${CONF} \
-    | UNCOMMENT_DIR "LoadModule .*mod_socache_shmcb.so" \
-    | UNCOMMENT_DIR "LoadModule .*mod_ssl.so" \
-    | UNCOMMENT_DIR "Include .*httpd-ssl.conf" \
-    > \${CONF} \
+    | UNCOMMENT_DIR "LoadModule .*/mod_socache_shmcb.so" \
+    | UNCOMMENT_DIR "LoadModule .*/mod_ssl.so" \
+    | UNCOMMENT_DIR "Include .*/httpd-ssl.conf" \
+    | UNCOMMENT_DIR "Include .*/httpd-mpm.conf" \
+    > \${CONF}.x && mv \${CONF}.x \${CONF} \
     && cat \${CONF_SSL} \
     | UNCOMMENT_DIR "SSLCertificateChainFile .*server-ca.crt" \
-    > \${CONF_SSL}
+    > \${CONF_SSL}.x && mv \${CONF_SSL}.x \${CONF_SSL} \
+    && echo ">Configs have been configured<"
 EOF
 
 if (( $? )) ; then echo "Build ${HTTPS_CHECK_IMG} failed :(" ; fi
