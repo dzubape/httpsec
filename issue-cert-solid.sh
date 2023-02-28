@@ -28,6 +28,7 @@ print_info "Getting certificate for <${DOMAIN_NAME}>..."
 
 ## Running http-web-server ##
 mkdir -p ${WEB_ROOT_LOCAL}
+rm_webroot() { rm -rf ${WEB_ROOT_LOCAL} ; }
 
 docker run --rm -d \
     -p 80:80 \
@@ -47,9 +48,9 @@ RUN apt update && apt install -y curl && apt clean \
 EOF
 
 ## Running acme cert-issue ##
-CERT_DIR_LOCAL=`pwd`/cert-storage
+CERT_DIR_LOCAL=`pwd`/cert-storage/${DOMAIN_NAME}
 CERT_DIR_ACME=${WEB_ROOT_ACME}/cert
-RAW_CERT_DIR_LOCAL=`pwd`/cert-raw
+RAW_CERT_DIR_LOCAL=`pwd`/cert-raw/${DOMAIN_NAME}
 RAW_CERT_DIR_ACME=/root/.acme.sh
 mkdir -p ${CERT_DIR_LOCAL}
 
@@ -86,11 +87,14 @@ docker run --rm \
 
 ISSUE_FAILED=$?
 
+rm ${ACME_ENTRYPOINT_LOCAL}
+
 docker rm -f ${HTTP_CONTAINER}
 
 if (( ${ISSUE_FAILED} ))
 then
     print_error "Certificate issue failed. Error code: ${ISSUE_FAILED}"
+    rm_webroot
     exit -1
 fi
 
@@ -124,6 +128,7 @@ EOF
 if (( $? ))
 then
     print_error "Build ${HTTPS_CHECK_IMG} failed :("
+    rm_webroot
     exit -1
 fi
 
@@ -147,6 +152,7 @@ shutdown_https() { docker rm -f ${HTTPS_CONTAINER} ; }
 if (( $? ))
 then
     print_error "Check image run failed.."
+    rm_webroot
     exit -1
 fi
 
@@ -157,28 +163,31 @@ if (( $? ))
 then
     print_error "Check request failed"
     shutdown_https
+    rm_webroot
     exit -1
 fi
 
 echo -n "Check response: "
 print_info ${CHECK_RESPONSE}
 
+CHECK_ERROR=0
+
 if [ "${CHECK_CONTENT}" != "${CHECK_RESPONSE}" ]
 then
     print_error "Request over HTTPS failed. Response contains shit"
-    shutdown_https
-    exit -1
+    CHECK_ERROR=-1
+else
+    print_ok "SSL is on and works enough"
 fi
 
-print_ok "SSL is on and works enough"
-
-docker rm -f ${HTTPS_CONTAINER}
+shutdown_https
 
 if (( $? ))
 then
     print_error "Test container cannot be removed properly. Solve this trouble mannually"
-    shutdown_https
-    exit -1
+else
+    print_info "Test container has been removed. See you"
+    rm_webroot
 fi
 
-print_info "Test container has been removed. See you"
+exit $(( CHECK_ERROR ))
